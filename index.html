@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PromptForge</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #202125;
+      color: #d1d5db;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      padding: 16px;
+      text-align: center;
+      background-color: #1a1a1b;
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+    }
+
+    #aiSelector {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      background-color: #1d1d1fe7;
+    }
+
+    .ai-option {
+      padding: 8px 16px;
+      border-radius: 6px;
+      background-color: #3d3f50;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .ai-option.selected {
+      background-color: #1d1d1fe7;
+      color: white;
+    }
+
+    #chatbox {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      background-color: #444654;
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: #3e8ef7;
+      color: white;
+    }
+
+    .bot {
+      align-self: flex-start;
+    }
+    #promptGuide {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background-color: #1f1f22;
+  border-top: 1px solid #2e2e35;
+  border-bottom: 1px solid #2e2e35;
+}
+
+.instructions {
+  max-width: 700px;
+  text-align: center;
+  background-color: #2a2a32;
+  padding: 20px;
+  border-radius: 10px;
+  color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.instructions h2 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.instructions p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+    #inputArea {
+      display: flex;
+      padding: 12px;
+      background-color: #202123;
+    }
+
+    textarea {
+      flex: 1;
+      background-color: #40414f;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      resize: none;
+      font-size: 14px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      background-color: #394350;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>PromptForge - AI Prompt Optimizer</header>
+
+  <div id="aiSelector">
+    <div class="ai-option selected" onclick="selectAI(this, 'ChatGPT')">ChatGPT</div>
+    <div class="ai-option" onclick="selectAI(this, 'Claude')">Claude</div>
+    <div class="ai-option" onclick="selectAI(this, 'Gemini')">Gemini</div>
+    <div class="ai-option" onclick="selectAI(this, 'Mistral')">Mistral</div>
+    <div class="ai-option" onclick="selectAI(this, 'CommandR')">Command-R</div>
+  </div>
+
+  <div id="chatbox"></div>
+
+  <div id="promptGuide">
+  <div class="instructions">
+    <h2>How to Prompt</h2>
+    <p>
+      Follow the <strong>Task, Context, Reference, Evaluate, Iterate</strong> method.<br />
+      In this same order of importance, include all the relevant information for best results.
+    </p>
+  </div>
+</div>
+
+
+  <div id="inputArea">
+    <textarea id="userInput" placeholder="Type your prompt here..."></textarea>
+    <button onclick="optimizePrompt()">Send</button>
+  </div>
+
+  <script>
+    const chatbox = document.getElementById('chatbox');
+    let selectedAI = 'ChatGPT';
+
+    function selectAI(element, aiName) {
+      document.querySelectorAll('.ai-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      selectedAI = aiName;
+    }
+
+    async function optimizePrompt() {
+      const input = document.getElementById('userInput');
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      appendMessage(userText, 'user');
+      input.value = '';
+
+      const botMessage = document.createElement('div');
+      botMessage.classList.add('message', 'bot');
+      botMessage.textContent = '...';
+      chatbox.appendChild(botMessage);
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      try {
+        const response = await fetch('http://localhost:3000/optimize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: userText, ai: selectedAI }),
+        });
+        const data = await response.json();
+        botMessage.textContent = data.optimized;
+      } catch (error) {
+        botMessage.textContent = 'Error: Could not reach server.';
+      }
+
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function appendMessage(text, sender) {
+      const message = document.createElement('div');
+      message.classList.add('message', sender);
+      message.textContent = text;
+      chatbox.appendChild(message);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
